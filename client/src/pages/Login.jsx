@@ -1,13 +1,88 @@
 import React, {useState, useEffect} from "react";
 import styled from "styled-components";
 import {Link, useNavigate} from "react-router-dom";
-import Logo from "../assets/logo.svg";
+import Logo from "../assets/img/logo.svg";
 import {ToastContainer, toast} from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import {login} from "../utils/APIRoutes";
 import {Helmet} from "react-helmet";
 
+function Login({onLogin}) {
+    const navigate = useNavigate();
+    const [values, setValues] = useState({
+        username: "",
+        password: "",
+    });
+    const toastOptions = {
+        position: "bottom-right",
+        autoClose: 8000,
+        draggable: true,
+        theme: "dark",
+    };
+
+    const checkAuthenticate = async () => {
+        const user = await JSON.parse(localStorage.getItem("chat-app-user"));
+        if (user && user?.isAvatarImageSet) {
+            navigate("/");
+        } else if (user?.isAvatarImageSet === false) {
+            navigate("/setAvatar");
+        }
+    };
+
+    useEffect(() => {
+        checkAuthenticate();
+    }, []);
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        const {username, password} = values;
+
+        try {
+            const {data} = await axios.post(login, {
+                username,
+                password,
+            });
+
+            localStorage.setItem("chat-app-user", JSON.stringify(data.user));
+            if (data.user.isAvatarImageSet) {
+                return navigate("/");
+            }
+
+            return navigate("/setAvatar");
+        } catch (err) {
+            console.log(err);
+            toast.error(err.response.data.msg, toastOptions);
+        }
+    };
+
+    const handleChange = (event) => {
+        setValues({...values, [event.target.name]: event.target.value.trim()});
+    };
+
+    return (
+        <>
+            <FormContainer>
+                <Helmet>
+                    <title>Chat App | Login</title>
+                </Helmet>
+                <form onSubmit={(event) => handleSubmit(event)}>
+                    <div className="brand">
+                        <img src={Logo} alt="Logo" />
+                        <h1>Snappy</h1>
+                    </div>
+                    <input type="text" placeholder="Username" name="username" onChange={(e) => handleChange(e)} autoFocus required />
+                    <input type="password" placeholder="Password" name="password" onChange={(e) => handleChange(e)} required />
+                    <button type="submit">Login</button>
+                    <span>
+                        Dont have an account ? <Link to={"/register"}>Register</Link>
+                    </span>
+                </form>
+            </FormContainer>
+            <ToastContainer />
+        </>
+    );
+}
 const FormContainer = styled.div`
     height: 100vh;
     width: 100vw;
@@ -88,71 +163,5 @@ const FormContainer = styled.div`
         padding: 0 1rem;
     }
 `;
-
-function Login() {
-    const navigate = useNavigate();
-    const [values, setValues] = useState({
-        username: "",
-        password: "",
-    });
-
-    useEffect(() => {
-        if (localStorage.getItem("chat-app-user")) {
-            navigate("/");
-        }
-    }, []);
-
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-        const {username, password} = values;
-
-        try {
-            const {data} = await axios.post(login, {
-                username,
-                password,
-            });
-
-            localStorage.setItem("chat-app-user", JSON.stringify(data.user));
-
-            navigate("/");
-        } catch (err) {
-            toast.error(err.response.data.msg, toastOptions);
-        }
-    };
-
-    const toastOptions = {
-        position: "bottom-right",
-        autoClose: 8000,
-        draggable: true,
-        theme: "dark",
-    };
-
-    const handleChange = (event) => {
-        setValues({...values, [event.target.name]: event.target.value.trim()});
-    };
-
-    return (
-        <>
-            <FormContainer>
-                <Helmet>
-                    <title>Chat App | Login</title>
-                </Helmet>
-                <form onSubmit={(event) => handleSubmit(event)}>
-                    <div className="brand">
-                        <img src={Logo} alt="Logo" />
-                        <h1>Snappy</h1>
-                    </div>
-                    <input type="text" placeholder="Username" name="username" onChange={(e) => handleChange(e)} autoFocus required />
-                    <input type="password" placeholder="Password" name="password" onChange={(e) => handleChange(e)} required />
-                    <button type="submit">Login</button>
-                    <span>
-                        Dont have an account ? <Link to={"/register"}>Register</Link>
-                    </span>
-                </form>
-            </FormContainer>
-            <ToastContainer />
-        </>
-    );
-}
 
 export default Login;

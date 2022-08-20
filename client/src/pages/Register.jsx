@@ -1,12 +1,108 @@
 import React, {useState, useEffect} from "react";
 import styled from "styled-components";
 import {Link, useNavigate} from "react-router-dom";
-import Logo from "../assets/logo.svg";
+import Logo from "../assets/img/logo.svg";
 import {ToastContainer, toast} from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import {register} from "../utils/APIRoutes";
 import {Helmet} from "react-helmet";
+
+function Register() {
+    const navigate = useNavigate();
+    const [values, setValues] = useState({
+        username: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+    });
+    const toastOptions = {
+        position: "bottom-right",
+        autoClose: 8000,
+        draggable: true,
+        theme: "dark",
+    };
+
+    const checkAuthenticate = async () => {
+        const user = await JSON.parse(localStorage.getItem("chat-app-user"));
+        if (user && user.isAvatarImageSet) {
+            navigate("/");
+        } else if (!user.isAvatarImageSet) {
+            navigate("/setAvatar");
+        }
+    };
+
+    useEffect(() => {
+        checkAuthenticate();
+    }, []);
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        if (handleValidation()) {
+            const {username, email, password} = values;
+
+            try {
+                const {data} = await axios.post(register, {
+                    username,
+                    email,
+                    password,
+                });
+
+                localStorage.setItem("chat-app-user", JSON.stringify(data.user));
+
+                navigate("/");
+            } catch (err) {
+                toast.error(err.response.data.msg, toastOptions);
+            }
+        }
+    };
+
+    const handleValidation = () => {
+        const {username, password, confirmPassword} = values;
+
+        if (username.length < 5) {
+            toast.error("Username should be greater than 5 characters", toastOptions);
+            return false;
+        } else if (password.length < 8) {
+            toast.error("Password should be equal or greater than 8 characters", toastOptions);
+            return false;
+        } else if (password !== confirmPassword) {
+            toast.error("Password and confirm password should be same", toastOptions);
+            return false;
+        }
+
+        return true;
+    };
+
+    const handleChange = (event) => {
+        setValues({...values, [event.target.name]: event.target.value.trim()});
+    };
+
+    return (
+        <>
+            <FormContainer>
+                <Helmet>
+                    <title>Chat App | Register</title>
+                </Helmet>
+                <form onSubmit={(event) => handleSubmit(event)}>
+                    <div className="brand">
+                        <img src={Logo} alt="Logo" />
+                        <h1>Snappy</h1>
+                    </div>
+                    <input type="text" placeholder="Username" name="username" onChange={(e) => handleChange(e)} autoFocus required />
+                    <input type="email" placeholder="Email" name="email" onChange={(e) => handleChange(e)} required />
+                    <input type="password" placeholder="Password" name="password" onChange={(e) => handleChange(e)} required />
+                    <input type="password" placeholder="Confirm Password" name="confirmPassword" onChange={(e) => handleChange(e)} required />
+                    <button type="submit">Register</button>
+                    <span>
+                        Already have an account ? <Link to={"/login"}>Login</Link>
+                    </span>
+                </form>
+            </FormContainer>
+            <ToastContainer />
+        </>
+    );
+}
 
 const FormContainer = styled.div`
     height: 100vh;
@@ -88,95 +184,5 @@ const FormContainer = styled.div`
         padding: 0 1rem;
     }
 `;
-
-function Register() {
-    const navigate = useNavigate();
-    const [values, setValues] = useState({
-        username: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-    });
-
-    useEffect(() => {
-        if (localStorage.getItem("chat-app-user")) {
-            navigate("/");
-        }
-    }, []);
-
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-        if (handleValidation()) {
-            const {username, email, password} = values;
-
-            try {
-                const {data} = await axios.post(register, {
-                    username,
-                    email,
-                    password,
-                });
-
-                localStorage.setItem("chat-app-user", JSON.stringify(data.user));
-
-                navigate("/");
-            } catch (err) {
-                toast.error(err.response.data.msg, toastOptions);
-            }
-        }
-    };
-
-    const toastOptions = {
-        position: "bottom-right",
-        autoClose: 8000,
-        draggable: true,
-        theme: "dark",
-    };
-
-    const handleValidation = () => {
-        const {username, password, confirmPassword} = values;
-
-        if (username.length < 5) {
-            toast.error("Username should be greater than 5 characters", toastOptions);
-            return false;
-        } else if (password.length < 8) {
-            toast.error("Password should be equal or greater than 8 characters", toastOptions);
-            return false;
-        } else if (password !== confirmPassword) {
-            toast.error("Password and confirm password should be same", toastOptions);
-            return false;
-        }
-
-        return true;
-    };
-
-    const handleChange = (event) => {
-        setValues({...values, [event.target.name]: event.target.value.trim()});
-    };
-
-    return (
-        <>
-            <FormContainer>
-                <Helmet>
-                    <title>Chat App | Register</title>
-                </Helmet>
-                <form onSubmit={(event) => handleSubmit(event)}>
-                    <div className="brand">
-                        <img src={Logo} alt="Logo" />
-                        <h1>Snappy</h1>
-                    </div>
-                    <input type="text" placeholder="Username" name="username" onChange={(e) => handleChange(e)} autoFocus required />
-                    <input type="email" placeholder="Email" name="email" onChange={(e) => handleChange(e)} required />
-                    <input type="password" placeholder="Password" name="password" onChange={(e) => handleChange(e)} required />
-                    <input type="password" placeholder="Confirm Password" name="confirmPassword" onChange={(e) => handleChange(e)} required />
-                    <button type="submit">Register</button>
-                    <span>
-                        Already have an account ? <Link to={"/login"}>Login</Link>
-                    </span>
-                </form>
-            </FormContainer>
-            <ToastContainer />
-        </>
-    );
-}
 
 export default Register;

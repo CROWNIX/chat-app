@@ -43,7 +43,7 @@ const authController = {
             delete user.password;
             return res.status(201).json({user, status: true});
         } catch (err) {
-            console.log(err);
+            console.log(err.message);
             return res.sendStatus(500);
         }
     },
