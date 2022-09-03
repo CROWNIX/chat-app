@@ -8,7 +8,7 @@ import axios from "axios";
 import {login} from "../utils/APIRoutes";
 import {Helmet} from "react-helmet";
 
-function Login({onLogin}) {
+function Login() {
     const navigate = useNavigate();
     const [values, setValues] = useState({
         username: "",
@@ -20,19 +20,6 @@ function Login({onLogin}) {
         draggable: true,
         theme: "dark",
     };
-
-    const checkAuthenticate = async () => {
-        const user = await JSON.parse(localStorage.getItem("chat-app-user"));
-        if (user && user?.isAvatarImageSet) {
-            navigate("/");
-        } else if (user?.isAvatarImageSet === false) {
-            navigate("/setAvatar");
-        }
-    };
-
-    useEffect(() => {
-        checkAuthenticate();
-    }, []);
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -51,7 +38,11 @@ function Login({onLogin}) {
 
             return navigate("/setAvatar");
         } catch (err) {
-            console.log(err);
+            if (err.message === "Network Error") {
+                toast.error("Network Error", toastOptions);
+
+                return;
+            }
             toast.error(err.response.data.msg, toastOptions);
         }
     };
@@ -59,6 +50,18 @@ function Login({onLogin}) {
     const handleChange = (event) => {
         setValues({...values, [event.target.name]: event.target.value.trim()});
     };
+
+    useEffect(() => {
+        const checkAuthenticate = async () => {
+            const user = await JSON.parse(localStorage.getItem("chat-app-user"));
+            if (user && user?.isAvatarImageSet) {
+                navigate("/");
+            } else if (user?.isAvatarImageSet === false) {
+                navigate("/setAvatar");
+            }
+        };
+        checkAuthenticate();
+    }, []);
 
     return (
         <>

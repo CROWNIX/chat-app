@@ -23,16 +23,15 @@ function Register() {
         theme: "dark",
     };
 
-    const checkAuthenticate = async () => {
-        const user = await JSON.parse(localStorage.getItem("chat-app-user"));
-        if (user && user.isAvatarImageSet) {
-            navigate("/");
-        } else if (!user.isAvatarImageSet) {
-            navigate("/setAvatar");
-        }
-    };
-
     useEffect(() => {
+        const checkAuthenticate = async () => {
+            const user = await JSON.parse(localStorage.getItem("chat-app-user"));
+            if (user && user.isAvatarImageSet) {
+                navigate("/");
+            } else if (user?.isAvatarImageSet === false) {
+                navigate("/setAvatar");
+            }
+        };
         checkAuthenticate();
     }, []);
 
@@ -52,6 +51,11 @@ function Register() {
 
                 navigate("/");
             } catch (err) {
+                if (err.message === "Network Error") {
+                    toast.error("Network Error", toastOptions);
+
+                    return;
+                }
                 toast.error(err.response.data.msg, toastOptions);
             }
         }
